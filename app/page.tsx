@@ -1,65 +1,136 @@
-import Image from "next/image";
+import { getAgentStatus, getPortfolios, getSignalDefinition, getSignals } from '@/lib/dashboard-data'
+import { StatTile } from './components/StatTile'
+import { OutcomeBadge } from './components/OutcomeBadge'
 
-export default function Home() {
+export const dynamic = 'force-dynamic'
+
+function pct(v: number | null): string {
+  return v === null ? '—' : `${(v * 100).toFixed(1)}%`
+}
+
+export default async function Overview() {
+  const [signal, portfolios, status, recent] = await Promise.all([
+    getSignalDefinition(),
+    getPortfolios(),
+    getAgentStatus(),
+    getSignals({ limit: 5 }),
+  ])
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="mx-auto max-w-5xl px-6 py-10">
+      <header className="mb-8">
+        <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+          VEILLE
+        </h1>
+        <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+          Autonomous odds intelligence. Two agents. 104 matches. Zero human input.
+        </p>
+      </header>
+
+      <section className="mb-8 grid grid-cols-2 gap-3">
+        {status.map((s) => (
+          <div key={s.agent} className="rounded-lg p-4" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
+                VEILLE {s.agent}
+              </span>
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+                style={{
+                  background: s.running ? 'var(--status-good-bg)' : 'var(--status-muted-bg)',
+                  color: s.running ? 'var(--status-good)' : 'var(--text-secondary)',
+                }}
+              >
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ background: s.running ? 'var(--status-good)' : 'var(--text-muted)' }}
+                />
+                {s.running ? 'Running' : 'Idle'}
+              </span>
+            </div>
+            <div className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+              {s.lastSeen ? `Last seen ${new Date(s.lastSeen).toLocaleString()}` : 'Never seen'}
+            </div>
+          </div>
+        ))}
+      </section>
+
+      {signal && (
+        <section
+          className="mb-8 rounded-lg p-4"
+          style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+              {signal.name}
+            </h2>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+              style={{ background: 'var(--status-good-bg)', color: 'var(--status-good)' }}
+              title="registered_at is immutable — set before results were known"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--status-good)' }} />
+              Pre-registered {new Date(signal.registeredAt).toLocaleString()}
+            </span>
+          </div>
+          <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {signal.description}
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
+        </section>
+      )}
+
+      <section className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatTile label="Strategy A signals" value={String(portfolios.A.totalSignals)} sub="long the favoured team" />
+        <StatTile label="Strategy A hit rate" value={pct(portfolios.A.stats.hitRate)} accent="var(--series-blue)" />
+        <StatTile label="Strategy B signals" value={String(portfolios.B.totalSignals)} sub="inverse (short)" />
+        <StatTile label="Strategy B hit rate" value={pct(portfolios.B.stats.hitRate)} accent="var(--series-violet)" />
+      </section>
+
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Latest signals
+          </h2>
+          <a href="/signals" className="text-sm underline">
+            View all →
           </a>
         </div>
-      </main>
+        {recent.length === 0 ? (
+          <div
+            className="rounded-lg p-6 text-center text-sm"
+            style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+          >
+            No signals fired yet. SCOUT is watching TxLINE&apos;s live streams — this fills in as matches produce
+            qualifying odds shocks.
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-lg" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <tbody>
+                {recent.map((s, i) => (
+                  <tr key={s.id} style={i < recent.length - 1 ? { borderBottom: '1px solid var(--gridline)' } : undefined}>
+                    <td className="px-4 py-2.5" style={{ color: 'var(--text-primary)' }}>
+                      {s.homeTeam} vs {s.awayTeam}
+                    </td>
+                    <td className="px-4 py-2.5" style={{ color: s.strategy === 'A' ? 'var(--series-blue)' : 'var(--series-violet)' }}>
+                      Strategy {s.strategy}
+                    </td>
+                    <td className="px-4 py-2.5 capitalize" style={{ color: 'var(--text-secondary)' }}>
+                      {s.position.replace('_', ' ')}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <OutcomeBadge value={s.outcome} />
+                    </td>
+                    <td className="tabular px-4 py-2.5" style={{ color: 'var(--text-muted)' }}>
+                      {new Date(s.firedAt).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
-  );
+  )
 }
