@@ -257,13 +257,14 @@ export async function getAgentLog(limit = 50): Promise<AgentLogRow[]> {
 }
 
 export async function getAgentStatus(): Promise<AgentStatus[]> {
-  const log = await getAgentLog(200)
+  const res = await getSupabase().from('veille_agent_heartbeat').select('*')
+  const rows = (res.error ? [] : res.data) as { agent: 'scout' | 'clerk'; last_seen: string }[]
   const now = Date.now()
-  // scout heartbeats every 2min, clerk polls (and heartbeats) every 5min — thresholds give a safety margin.
+  // scout heartbeats every 2min, clerk every 5min — thresholds give a safety margin.
   const thresholds: Record<'scout' | 'clerk', number> = { scout: 5 * 60_000, clerk: 11 * 60_000 }
   return (['scout', 'clerk'] as const).map((agent) => {
-    const last = log.find((l) => l.agent === agent)
-    const lastSeen = last?.loggedAt ?? null
+    const row = rows.find((r) => r.agent === agent)
+    const lastSeen = row?.last_seen ?? null
     const running = lastSeen !== null && now - new Date(lastSeen).getTime() < thresholds[agent]
     return { agent, lastSeen, running }
   })

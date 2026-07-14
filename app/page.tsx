@@ -113,8 +113,8 @@ export default async function Landing() {
               autonomously. Every fire is written to Solana. Nothing here can be tuned after the fact.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <PrimaryButton href="/dashboard">View live dashboard</PrimaryButton>
-              <SecondaryButton href="#how-it-works">How it works</SecondaryButton>
+              <PrimaryButton href="/replay">Replay a real match</PrimaryButton>
+              <SecondaryButton href="/dashboard">View live dashboard</SecondaryButton>
             </div>
 
             {/* live status strip — real numbers, honest zero-state */}
@@ -212,9 +212,14 @@ export default async function Landing() {
           </div>
 
           {/* honest, labeled backtest case study — real numbers from a real match, never presented as a live production fire */}
-          <div className="mt-6 overflow-hidden rounded-lg" style={{ border: '1px solid var(--border)' }}>
-            <div className="px-5 py-3 text-xs font-medium uppercase tracking-wide" style={{ background: 'var(--surface-1)', color: 'var(--text-muted)' }}>
-              Validated against historical World Cup data — not a live production fire
+          <a
+            href="/replay?match=18222446"
+            className="mt-6 block overflow-hidden rounded-lg transition-opacity hover:opacity-90"
+            style={{ border: '1px solid var(--border)' }}
+          >
+            <div className="flex items-center justify-between px-5 py-3 text-xs font-medium uppercase tracking-wide" style={{ background: 'var(--surface-1)', color: 'var(--text-muted)' }}>
+              <span>Validated against historical World Cup data — not a live production fire</span>
+              <span style={{ color: 'var(--series-blue)' }}>Replay this match →</span>
             </div>
             <div className="grid gap-6 p-5 sm:grid-cols-[1fr_auto_1fr] sm:items-center" style={{ background: 'var(--surface-1)' }}>
               <div>
@@ -244,7 +249,7 @@ export default async function Landing() {
                 </div>
               </div>
             </div>
-          </div>
+          </a>
         </div>
       </section>
 
@@ -434,14 +439,15 @@ export default async function Landing() {
       <section>
         <div className="mx-auto max-w-3xl px-6 py-16 text-center sm:py-24">
           <h2 className="text-2xl font-semibold sm:text-3xl" style={{ color: 'var(--text-primary)' }}>
-            The tournament is the demo.
+            No fabricated numbers, live or historical.
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-            No staged data, no demo mode. Every number on this site comes from the same database the live agents
-            write to.
+            Live numbers come from the same database the agents write to. Historical replays come from TxLINE&apos;s
+            real record of matches that already happened. Nothing on this site is staged.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <PrimaryButton href="/dashboard">Explore the live dashboard</PrimaryButton>
+            <PrimaryButton href="/replay">Replay a real match</PrimaryButton>
+            <SecondaryButton href="/dashboard">Live dashboard</SecondaryButton>
             <SecondaryButton href="https://github.com/TheWeirdDee/veille">
               <GithubIcon size={16} />
               Source
@@ -476,6 +482,7 @@ export default async function Landing() {
               <ul className="mt-3 flex flex-col gap-2 text-sm">
                 {[
                   ['Dashboard', '/dashboard'],
+                  ['Replay', '/replay'],
                   ['Signals', '/signals'],
                   ['Portfolio', '/portfolio'],
                   ['On-chain ledger', '/onchain'],
