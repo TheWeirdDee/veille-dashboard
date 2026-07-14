@@ -269,6 +269,32 @@ export async function getAgentStatus(): Promise<AgentStatus[]> {
   })
 }
 
+export interface LandingStats {
+  registeredAt: string | null
+  totalSignals: number
+  totalSettled: number
+  totalOnchainConfirmed: number
+  agentsRunning: number
+}
+
+/** Lightweight aggregate for the landing page's live status strip. */
+export async function getLandingStats(): Promise<LandingStats> {
+  const db = getSupabase()
+  const [signal, portfolios, status, onchain] = await Promise.all([
+    getSignalDefinition(),
+    getPortfolios(),
+    getAgentStatus(),
+    db.from('veille_signals').select('id', { count: 'exact', head: true }).eq('onchain_status', 'confirmed'),
+  ])
+  return {
+    registeredAt: signal?.registeredAt ?? null,
+    totalSignals: portfolios.A.totalSignals + portfolios.B.totalSignals,
+    totalSettled: portfolios.A.totalSettled + portfolios.B.totalSettled,
+    totalOnchainConfirmed: onchain.count ?? 0,
+    agentsRunning: status.filter((s) => s.running).length,
+  }
+}
+
 export async function getSubscribers(): Promise<SubscriberRow[]> {
   const res = await getSupabase()
     .from('veille_subscribers')

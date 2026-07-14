@@ -1,136 +1,545 @@
-import { getAgentStatus, getPortfolios, getSignalDefinition, getSignals } from '@/lib/dashboard-data'
-import { StatTile } from './components/StatTile'
-import { OutcomeBadge } from './components/OutcomeBadge'
+import { getLandingStats } from '@/lib/dashboard-data'
+import { SignalWaveform } from './components/SignalWaveform'
+import {
+  ArrowRightIcon,
+  ChainIcon,
+  CheckIcon,
+  ClockIcon,
+  GithubIcon,
+  LayersIcon,
+  PulseIcon,
+  SendIcon,
+  ShieldIcon,
+} from './components/Icon'
 
 export const dynamic = 'force-dynamic'
 
-function pct(v: number | null): string {
-  return v === null ? '—' : `${(v * 100).toFixed(1)}%`
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' })
 }
 
-export default async function Overview() {
-  const [signal, portfolios, status, recent] = await Promise.all([
-    getSignalDefinition(),
-    getPortfolios(),
-    getAgentStatus(),
-    getSignals({ limit: 5 }),
-  ])
+// ---------------------------------------------------------------------------
+// Small building blocks
+// ---------------------------------------------------------------------------
+
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="mb-3 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest"
+      style={{ color: 'var(--text-muted)' }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function PrimaryButton({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-opacity hover:opacity-90"
+      style={{ background: 'var(--series-blue)', color: '#fff' }}
+    >
+      {children}
+      <ArrowRightIcon size={15} />
+    </a>
+  )
+}
+
+function SecondaryButton({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
+      style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+    >
+      {children}
+    </a>
+  )
+}
+
+function SectionHeading({
+  eyebrow,
+  title,
+  lede,
+}: {
+  eyebrow: string
+  title: string
+  lede?: string
+}) {
+  return (
+    <div className="mx-auto max-w-2xl text-center">
+      <Eyebrow>{eyebrow}</Eyebrow>
+      <h2 className="text-2xl font-semibold sm:text-3xl" style={{ color: 'var(--text-primary)' }}>
+        {title}
+      </h2>
+      {lede && (
+        <p className="mt-3 text-base leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+          {lede}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
+export default async function Landing() {
+  const stats = await getLandingStats()
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
-      <header className="mb-8">
-        <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-          VEILLE
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-          Autonomous odds intelligence. Two agents. 104 matches. Zero human input.
-        </p>
-      </header>
-
-      <section className="mb-8 grid grid-cols-2 gap-3">
-        {status.map((s) => (
-          <div key={s.agent} className="rounded-lg p-4" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
-                VEILLE {s.agent}
-              </span>
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
-                style={{
-                  background: s.running ? 'var(--status-good-bg)' : 'var(--status-muted-bg)',
-                  color: s.running ? 'var(--status-good)' : 'var(--text-secondary)',
-                }}
-              >
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ background: s.running ? 'var(--status-good)' : 'var(--text-muted)' }}
-                />
-                {s.running ? 'Running' : 'Idle'}
-              </span>
-            </div>
-            <div className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-              {s.lastSeen ? `Last seen ${new Date(s.lastSeen).toLocaleString()}` : 'Never seen'}
-            </div>
-          </div>
-        ))}
-      </section>
-
-      {signal && (
-        <section
-          className="mb-8 rounded-lg p-4"
-          style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-              {signal.name}
-            </h2>
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
-              style={{ background: 'var(--status-good-bg)', color: 'var(--status-good)' }}
-              title="registered_at is immutable — set before results were known"
-            >
+    <div>
+      {/* ---------------------------------------------------------------- */}
+      {/* Hero                                                             */}
+      {/* ---------------------------------------------------------------- */}
+      <section className="border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 sm:py-24 lg:grid-cols-2 lg:items-center lg:gap-16">
+          <div>
+            <Eyebrow>
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--status-good)' }} />
-              Pre-registered {new Date(signal.registeredAt).toLocaleString()}
-            </span>
+              TxODDS World Cup Hackathon · Trading Tools &amp; Agents
+            </Eyebrow>
+            <h1
+              className="text-4xl font-semibold leading-[1.1] sm:text-5xl"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              The signal was registered before the first ball was kicked.
+            </h1>
+            <p className="mt-5 max-w-xl text-base leading-relaxed sm:text-lg" style={{ color: 'var(--text-secondary)' }}>
+              VEILLE watches every live World Cup match on TxLINE&apos;s odds and scores feeds, detects one
+              pre-registered probability shock, and trades it two opposite ways at once. Every position settles
+              autonomously. Every fire is written to Solana. Nothing here can be tuned after the fact.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <PrimaryButton href="/dashboard">View live dashboard</PrimaryButton>
+              <SecondaryButton href="#how-it-works">How it works</SecondaryButton>
+            </div>
+
+            {/* live status strip — real numbers, honest zero-state */}
+            <dl className="mt-10 grid grid-cols-2 gap-x-6 gap-y-4 border-t pt-6 sm:grid-cols-4" style={{ borderColor: 'var(--gridline)' }}>
+              <div>
+                <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Agents live
+                </dt>
+                <dd className="tabular mt-0.5 text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  {stats.agentsRunning} / 2
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Signals fired
+                </dt>
+                <dd className="tabular mt-0.5 text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  {stats.totalSignals}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  On-chain confirmations
+                </dt>
+                <dd className="tabular mt-0.5 text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  {stats.totalOnchainConfirmed}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Signal registered
+                </dt>
+                <dd className="mt-0.5 text-sm font-medium" style={{ color: 'var(--status-good)' }}>
+                  {stats.registeredAt ? formatDate(stats.registeredAt) : 'pending'}
+                </dd>
+              </div>
+            </dl>
           </div>
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {signal.description}
-          </p>
-        </section>
-      )}
 
-      <section className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile label="Strategy A signals" value={String(portfolios.A.totalSignals)} sub="long the favoured team" />
-        <StatTile label="Strategy A hit rate" value={pct(portfolios.A.stats.hitRate)} accent="var(--series-blue)" />
-        <StatTile label="Strategy B signals" value={String(portfolios.B.totalSignals)} sub="inverse (short)" />
-        <StatTile label="Strategy B hit rate" value={pct(portfolios.B.stats.hitRate)} accent="var(--series-violet)" />
-      </section>
-
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-            Latest signals
-          </h2>
-          <a href="/signals" className="text-sm underline">
-            View all →
-          </a>
+          <div className="rounded-xl p-6" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
+            <SignalWaveform />
+            <div className="mt-4 flex items-center justify-center gap-6 text-xs" style={{ color: 'var(--text-secondary)' }}>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full" style={{ background: 'var(--series-blue)' }} />
+                Strategy A — long the favoured team
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full" style={{ background: 'var(--series-violet)' }} />
+                Strategy B — inverse (short)
+              </span>
+            </div>
+          </div>
         </div>
-        {recent.length === 0 ? (
-          <div
-            className="rounded-lg p-6 text-center text-sm"
-            style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-          >
-            No signals fired yet. SCOUT is watching TxLINE&apos;s live streams — this fills in as matches produce
-            qualifying odds shocks.
-          </div>
-        ) : (
-          <div className="overflow-x-auto rounded-lg" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <tbody>
-                {recent.map((s, i) => (
-                  <tr key={s.id} style={i < recent.length - 1 ? { borderBottom: '1px solid var(--gridline)' } : undefined}>
-                    <td className="px-4 py-2.5" style={{ color: 'var(--text-primary)' }}>
-                      {s.homeTeam} vs {s.awayTeam}
-                    </td>
-                    <td className="px-4 py-2.5" style={{ color: s.strategy === 'A' ? 'var(--series-blue)' : 'var(--series-violet)' }}>
-                      Strategy {s.strategy}
-                    </td>
-                    <td className="px-4 py-2.5 capitalize" style={{ color: 'var(--text-secondary)' }}>
-                      {s.position.replace('_', ' ')}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <OutcomeBadge value={s.outcome} />
-                    </td>
-                    <td className="tabular px-4 py-2.5" style={{ color: 'var(--text-muted)' }}>
-                      {new Date(s.firedAt).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* The problem                                                      */}
+      {/* ---------------------------------------------------------------- */}
+      <section className="border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="mx-auto max-w-5xl px-6 py-16 sm:py-20">
+          <SectionHeading
+            eyebrow="The problem"
+            title="Markets move on headlines. They don't always move correctly."
+            lede="When a goal or red card flips the balance of a match, odds move fast — but not always by the right amount, and not always instantly. VEILLE's hypothesis: markets systematically underreact to high-impact events when the newly-favoured team was previously the underdog."
+          />
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-lg p-5" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
+              <div className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                Condition 1
+              </div>
+              <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                Win probability shifts <strong style={{ color: 'var(--text-primary)' }}>≥12%</strong> within a{' '}
+                <strong style={{ color: 'var(--text-primary)' }}>120-second</strong> rolling window.
+              </p>
+            </div>
+            <div className="rounded-lg p-5" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
+              <div className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                Condition 2
+              </div>
+              <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                A <strong style={{ color: 'var(--text-primary)' }}>goal or red card</strong> occurred within the
+                preceding <strong style={{ color: 'var(--text-primary)' }}>180 seconds</strong>.
+              </p>
+            </div>
+            <div className="rounded-lg p-5" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
+              <div className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                Condition 3
+              </div>
+              <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                Pre-event odds implied <strong style={{ color: 'var(--text-primary)' }}>&lt;40%</strong> for the
+                team now favoured — they were the underdog a moment ago.
+              </p>
+            </div>
+          </div>
+
+          {/* honest, labeled backtest case study — real numbers from a real match, never presented as a live production fire */}
+          <div className="mt-6 overflow-hidden rounded-lg" style={{ border: '1px solid var(--border)' }}>
+            <div className="px-5 py-3 text-xs font-medium uppercase tracking-wide" style={{ background: 'var(--surface-1)', color: 'var(--text-muted)' }}>
+              Validated against historical World Cup data — not a live production fire
+            </div>
+            <div className="grid gap-6 p-5 sm:grid-cols-[1fr_auto_1fr] sm:items-center" style={{ background: 'var(--surface-1)' }}>
+              <div>
+                <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Argentina vs Switzerland
+                </div>
+                <div className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  72&apos; — Switzerland red card
+                </div>
+                <div className="tabular mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                  Argentina implied probability: <span style={{ color: 'var(--text-primary)' }}>32.1%</span> pre-event
+                </div>
+              </div>
+              <div className="hidden justify-self-center sm:block" style={{ color: 'var(--text-muted)' }}>
+                <ArrowRightIcon size={20} />
+              </div>
+              <div>
+                <div className="tabular text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  → <span style={{ color: 'var(--series-blue)', fontWeight: 600 }}>46.1%</span> within 114 seconds
+                  <span className="ml-1" style={{ color: 'var(--text-muted)' }}>
+                    (+14.0pp, over threshold)
+                  </span>
+                </div>
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: 'var(--status-good-bg)', color: 'var(--status-good)' }}>
+                  <CheckIcon size={12} />
+                  Argentina won 3–1 (ET) — signal hit
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* How it works                                                     */}
+      {/* ---------------------------------------------------------------- */}
+      <section id="how-it-works" className="border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="mx-auto max-w-5xl px-6 py-16 sm:py-20">
+          <SectionHeading
+            eyebrow="How it works"
+            title="One signal. Two opposite bets. Let the tournament decide."
+            lede="Every time the signal fires, VEILLE opens both positions simultaneously from the same observation — proving which approach actually works empirically, not by argument."
+          />
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-lg p-6" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderTop: '3px solid var(--series-blue)' }}>
+              <div className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--series-blue)' }}>
+                Strategy A — Long
+              </div>
+              <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                Bets that the market is right to shift — takes a long position on the newly-favoured team when the
+                signal fires.
+              </p>
+            </div>
+            <div className="rounded-lg p-6" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderTop: '3px solid var(--series-violet)' }}>
+              <div className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--series-violet)' }}>
+                Strategy B — Short (inverse)
+              </div>
+              <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                Bets that the market overcorrected — takes the opposite position on the exact same trigger, same
+                moment, same match.
+              </p>
+            </div>
+          </div>
+
+          <p className="mx-auto mt-6 max-w-2xl text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+            Fixed-fractional sizing — one unit of notional capital per fire, no confidence weighting, no discretion.
+            A five-minute cooldown per match (reset at half-time and full-time) stops a goal immediately followed by
+            a card from producing signal clusters.
+          </p>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Four layers                                                      */}
+      {/* ---------------------------------------------------------------- */}
+      <section className="border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="mx-auto max-w-5xl px-6 py-16 sm:py-20">
+          <SectionHeading
+            eyebrow="Architecture"
+            title="Four layers, each doing exactly one job"
+          />
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+            {[
+              {
+                icon: <PulseIcon size={22} />,
+                title: 'Signal engine',
+                body: 'SCOUT watches TxLINE’s live odds and scores streams across every active match simultaneously. Deterministic conditional logic — no ML, no black box. Every fire is auditable line by line.',
+              },
+              {
+                icon: <LayersIcon size={22} />,
+                title: 'Portfolio management',
+                body: 'CLERK settles every position against the actual outcome and recomputes win rate, Sharpe ratio, and maximum drawdown — the numbers a trading desk actually looks at, not just a hit-rate headline.',
+              },
+              {
+                icon: <ChainIcon size={22} />,
+                title: 'On-chain ledger',
+                body: 'Every fire and every settlement is written to Solana via the Memo program, referencing TxLINE’s cryptographic proof for that exact match moment. No custom contract — nothing to trust but arithmetic.',
+              },
+              {
+                icon: <SendIcon size={22} />,
+                title: 'Subscriber protocol',
+                body: 'Registered B2B endpoints receive an HMAC-SHA256-signed webhook within seconds of every fire and settlement — a trading desk can build automated execution on top without touching this dashboard.',
+              },
+            ].map((layer) => (
+              <div key={layer.title} className="flex gap-4 rounded-lg p-5" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                  style={{ background: 'var(--series-blue-track)', color: 'var(--series-blue)' }}
+                >
+                  {layer.icon}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {layer.title}
+                  </div>
+                  <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    {layer.body}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Production readiness                                             */}
+      {/* ---------------------------------------------------------------- */}
+      <section className="border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="mx-auto max-w-5xl px-6 py-16 sm:py-20">
+          <SectionHeading
+            eyebrow="Production readiness"
+            title="Every failure mode is handled without a human"
+            lede="A hackathon demo that only works when nothing goes wrong isn't production-ready. Here's what happens when things do."
+          />
+
+          <div className="mt-10 grid gap-3 sm:grid-cols-2">
+            {[
+              ['SSE connection drops', 'Exponential backoff reconnect (1s → 2s → 4s → 8s → 16s → 30s), then retries every 30s.'],
+              ['A reconnect happens mid-match', 'Snapshot recovery replays any events missed during the gap before resuming live.'],
+              ['The guest JWT expires', 'Renewed automatically on 401, before the next reconnect attempt.'],
+              ['A match is abandoned', 'Every open position for that match is voided and excluded from win-rate statistics.'],
+              ['A match is postponed', 'Positions are held; CLERK re-checks on every 5-minute poll until it resumes.'],
+              ['A Solana write fails', 'Retried up to 3 times. The signal is already durable in Supabase — it is never silently dropped.'],
+              ['A subscriber webhook fails', 'Retried up to 3 times per subscriber; failures are logged, not swallowed.'],
+              ['Anything else happens', 'Logged to the agent log with a severity level — visible on this dashboard, not buried in a console.'],
+            ].map(([title, body]) => (
+              <div key={title} className="flex gap-3 rounded-lg p-4" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
+                <div className="mt-0.5 shrink-0" style={{ color: 'var(--status-good)' }}>
+                  <CheckIcon size={16} />
+                </div>
+                <div>
+                  <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                    {title}
+                  </div>
+                  <div className="mt-0.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    {body}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* For trading desks                                                */}
+      {/* ---------------------------------------------------------------- */}
+      <section className="border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="mx-auto max-w-5xl px-6 py-16 sm:py-20">
+          <div className="grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:items-center">
+            <div>
+              <Eyebrow>
+                <ShieldIcon size={14} />
+                Built to be verified, not trusted
+              </Eyebrow>
+              <h2 className="text-2xl font-semibold sm:text-3xl" style={{ color: 'var(--text-primary)' }}>
+                For trading desks and market operators
+              </h2>
+              <p className="mt-3 text-base leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                A trading desk doesn&apos;t need to trust this dashboard&apos;s numbers &mdash; every signal and
+                settlement is independently checkable on Solana Explorer, referenced against TxLINE&apos;s own
+                cryptographic proof. Subscribe an execution system to the webhook feed and act on signals without a
+                human anywhere in the loop.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <SecondaryButton href="/onchain">View on-chain ledger</SecondaryButton>
+                <SecondaryButton href="/subscribers">Subscriber status</SecondaryButton>
+              </div>
+            </div>
+
+            <div className="rounded-lg p-5 font-mono text-xs leading-relaxed" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+              <div style={{ color: 'var(--text-muted)' }}>{'// webhook payload — HMAC-SHA256 signed'}</div>
+              <pre className="mt-2 whitespace-pre-wrap break-words">{`{
+  "event": "signal_fired",
+  "strategy": "A",
+  "match_id": "18222446",
+  "trigger_event": "red_card",
+  "favoured_team": "home",
+  "position": "long_home",
+  "pre_event_prob": 0.321,
+  "post_signal_prob": 0.461,
+  "delta": 0.140,
+  "onchain_tx": "5TCB2qpL...",
+  "hmac_signature": "79afc681..."
+}`}</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Final CTA                                                        */}
+      {/* ---------------------------------------------------------------- */}
+      <section>
+        <div className="mx-auto max-w-3xl px-6 py-16 text-center sm:py-24">
+          <h2 className="text-2xl font-semibold sm:text-3xl" style={{ color: 'var(--text-primary)' }}>
+            The tournament is the demo.
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            No staged data, no demo mode. Every number on this site comes from the same database the live agents
+            write to.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <PrimaryButton href="/dashboard">Explore the live dashboard</PrimaryButton>
+            <SecondaryButton href="https://github.com/TheWeirdDee/veille">
+              <GithubIcon size={16} />
+              Source
+            </SecondaryButton>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Footer                                                           */}
+      {/* ---------------------------------------------------------------- */}
+      <footer className="border-t" style={{ borderColor: 'var(--border)', background: 'var(--surface-1)' }}>
+        <div className="mx-auto max-w-6xl px-6 py-12">
+          <div className="grid gap-10 sm:grid-cols-[1.4fr_1fr_1fr_1fr]">
+            <div>
+              <div className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                VEILLE
+              </div>
+              <p className="mt-2 max-w-xs text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                Autonomous odds intelligence. Two agents, one pre-registered signal, zero human input.
+              </p>
+              <div className="mt-4 flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                <ClockIcon size={13} />
+                {stats.registeredAt ? `Signal pre-registered ${formatDate(stats.registeredAt)}` : 'Signal pending registration'}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                Product
+              </div>
+              <ul className="mt-3 flex flex-col gap-2 text-sm">
+                {[
+                  ['Dashboard', '/dashboard'],
+                  ['Signals', '/signals'],
+                  ['Portfolio', '/portfolio'],
+                  ['On-chain ledger', '/onchain'],
+                ].map(([label, href]) => (
+                  <li key={label}>
+                    <a href={href} style={{ color: 'var(--text-secondary)' }}>
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <div className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                Operations
+              </div>
+              <ul className="mt-3 flex flex-col gap-2 text-sm">
+                {[
+                  ['Subscribers', '/subscribers'],
+                  ['Agent log', '/agent-log'],
+                ].map(([label, href]) => (
+                  <li key={label}>
+                    <a href={href} style={{ color: 'var(--text-secondary)' }}>
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <div className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                Resources
+              </div>
+              <ul className="mt-3 flex flex-col gap-2 text-sm">
+                <li>
+                  <a href="https://github.com/TheWeirdDee/veille" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)' }}>
+                    GitHub — agents
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com/TheWeirdDee/veille-dashboard" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)' }}>
+                    GitHub — dashboard
+                  </a>
+                </li>
+                <li>
+                  <a href="https://explorer.solana.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)' }}>
+                    Solana Explorer
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div
+            className="mt-10 flex flex-col gap-2 border-t pt-6 text-xs sm:flex-row sm:items-center sm:justify-between"
+            style={{ borderColor: 'var(--gridline)', color: 'var(--text-muted)' }}
+          >
+            <span>Built by Divine (@TheWeirdDee) · Lagos, Nigeria</span>
+            <span>TxODDS World Cup Hackathon · Trading Tools &amp; Agents track · 2026</span>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

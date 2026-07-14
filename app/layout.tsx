@@ -32,23 +32,26 @@ export default function RootLayout({
           style={{ borderBottom: "1px solid var(--border)", background: "var(--surface-1)" }}
           className="px-6 py-3"
         >
-          <div className="mx-auto flex max-w-5xl items-center gap-6 text-sm">
-            <a href="/" className="font-semibold" style={{ color: "var(--text-primary)" }}>
+          <div className="mx-auto flex max-w-6xl items-center gap-6 overflow-x-auto text-sm whitespace-nowrap">
+            <a href="/" className="shrink-0 font-semibold" style={{ color: "var(--text-primary)" }}>
               VEILLE
             </a>
-            <a href="/signals" style={{ color: "var(--text-secondary)" }}>
+            <a href="/dashboard" className="shrink-0" style={{ color: "var(--text-secondary)" }}>
+              Dashboard
+            </a>
+            <a href="/signals" className="shrink-0" style={{ color: "var(--text-secondary)" }}>
               Signals
             </a>
-            <a href="/portfolio" style={{ color: "var(--text-secondary)" }}>
+            <a href="/portfolio" className="shrink-0" style={{ color: "var(--text-secondary)" }}>
               Portfolio
             </a>
-            <a href="/onchain" style={{ color: "var(--text-secondary)" }}>
+            <a href="/onchain" className="shrink-0" style={{ color: "var(--text-secondary)" }}>
               On-chain
             </a>
-            <a href="/subscribers" style={{ color: "var(--text-secondary)" }}>
+            <a href="/subscribers" className="shrink-0" style={{ color: "var(--text-secondary)" }}>
               Subscribers
             </a>
-            <a href="/agent-log" style={{ color: "var(--text-secondary)" }}>
+            <a href="/agent-log" className="shrink-0" style={{ color: "var(--text-secondary)" }}>
               Agent log
             </a>
           </div>
