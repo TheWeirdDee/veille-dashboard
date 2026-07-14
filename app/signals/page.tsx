@@ -1,4 +1,4 @@
-import { getSignals } from '@/lib/dashboard-data'
+import { getSignalMatches, getSignals } from '@/lib/dashboard-data'
 import { OutcomeBadge } from '../components/OutcomeBadge'
 
 export const dynamic = 'force-dynamic'
@@ -7,47 +7,114 @@ function pct(v: number): string {
   return `${(v * 100).toFixed(0)}%`
 }
 
-export default async function SignalsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ strategy?: string }>
-}) {
-  const { strategy } = await searchParams
-  const filter = strategy === 'A' || strategy === 'B' ? strategy : undefined
-  const signals = await getSignals({ strategy: filter, limit: 100 })
+function buildHref(params: { strategy?: string; match?: string; outcome?: string }): string {
+  const search = new URLSearchParams()
+  if (params.strategy) search.set('strategy', params.strategy)
+  if (params.match) search.set('match', params.match)
+  if (params.outcome) search.set('outcome', params.outcome)
+  const qs = search.toString()
+  return qs ? `/signals?${qs}` : '/signals'
+}
 
+function FilterRow({
+  label,
+  options,
+  active,
+}: {
+  label: string
+  options: { label: string; href: string; value: string | undefined }[]
+  active: string | undefined
+}) {
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Signal feed
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Every fire, both strategies, most recent first.
-          </p>
-        </div>
-        <div className="flex gap-2 text-sm">
-          {[
-            { label: 'All', href: '/signals' },
-            { label: 'Strategy A', href: '/signals?strategy=A' },
-            { label: 'Strategy B', href: '/signals?strategy=B' },
-          ].map((f) => (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="w-20 shrink-0 text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-2">
+        {options.map((o) => {
+          const isActive = o.value === active
+          return (
             <a
-              key={f.label}
-              href={f.href}
-              className="rounded-full px-3 py-1"
+              key={o.label}
+              href={o.href}
+              className="rounded-full px-3 py-1 text-sm"
               style={{
-                background: (f.label === 'All' && !filter) || f.label === `Strategy ${filter}` ? 'var(--series-blue)' : 'var(--surface-1)',
-                color: (f.label === 'All' && !filter) || f.label === `Strategy ${filter}` ? '#fff' : 'var(--text-secondary)',
+                background: isActive ? 'var(--series-blue)' : 'var(--surface-1)',
+                color: isActive ? '#fff' : 'var(--text-secondary)',
                 border: '1px solid var(--border)',
               }}
             >
-              {f.label}
+              {o.label}
             </a>
-          ))}
-        </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+export default async function SignalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ strategy?: string; match?: string; outcome?: string }>
+}) {
+  const params = await searchParams
+  const strategy = params.strategy === 'A' || params.strategy === 'B' ? params.strategy : undefined
+  const match = params.match || undefined
+  const outcome = params.outcome || undefined
+
+  const [signals, matches] = await Promise.all([
+    getSignals({ strategy, matchId: match, outcome, limit: 100 }),
+    getSignalMatches(),
+  ])
+
+  return (
+    <div className="mx-auto max-w-5xl px-6 py-10">
+      <header className="mb-6">
+        <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+          Signal feed
+        </h1>
+        <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+          Every fire, both strategies, most recent first.
+        </p>
       </header>
+
+      <div className="mb-6 flex flex-col gap-3 rounded-lg p-4" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
+        <FilterRow
+          label="Strategy"
+          active={strategy}
+          options={[
+            { label: 'All', href: buildHref({ match, outcome }), value: undefined },
+            { label: 'A', href: buildHref({ strategy: 'A', match, outcome }), value: 'A' },
+            { label: 'B', href: buildHref({ strategy: 'B', match, outcome }), value: 'B' },
+          ]}
+        />
+        <FilterRow
+          label="Outcome"
+          active={outcome}
+          options={[
+            { label: 'All', href: buildHref({ strategy, match }), value: undefined },
+            { label: 'Hit', href: buildHref({ strategy, match, outcome: 'hit' }), value: 'hit' },
+            { label: 'Miss', href: buildHref({ strategy, match, outcome: 'miss' }), value: 'miss' },
+            { label: 'Void', href: buildHref({ strategy, match, outcome: 'void' }), value: 'void' },
+            { label: 'Pending', href: buildHref({ strategy, match, outcome: 'pending' }), value: 'pending' },
+          ]}
+        />
+        {matches.length > 0 && (
+          <FilterRow
+            label="Match"
+            active={match}
+            options={[
+              { label: 'All', href: buildHref({ strategy, outcome }), value: undefined },
+              ...matches.map((m) => ({
+                label: `${m.homeTeam} vs ${m.awayTeam}`,
+                href: buildHref({ strategy, outcome, match: m.matchId }),
+                value: m.matchId,
+              })),
+            ]}
+          />
+        )}
+      </div>
 
       {signals.length === 0 ? (
         <div

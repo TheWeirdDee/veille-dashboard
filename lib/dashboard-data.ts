@@ -220,16 +220,44 @@ function mapFire(r: SignalFireDbRow): SignalFireRow {
   }
 }
 
-export async function getSignals(opts: { strategy?: Strategy; limit?: number } = {}): Promise<SignalFireRow[]> {
+export async function getSignals(
+  opts: { strategy?: Strategy; matchId?: string; outcome?: string; limit?: number } = {}
+): Promise<SignalFireRow[]> {
   let query = getSupabase()
     .from('veille_signals')
     .select('*')
     .order('fired_at', { ascending: false })
     .limit(opts.limit ?? 50)
   if (opts.strategy) query = query.eq('strategy', opts.strategy)
+  if (opts.matchId) query = query.eq('match_id', opts.matchId)
+  if (opts.outcome === 'pending') query = query.is('outcome', null)
+  else if (opts.outcome) query = query.eq('outcome', opts.outcome)
   const res = await query
   if (res.error) throw new Error(res.error.message)
   return (res.data as SignalFireDbRow[]).map(mapFire)
+}
+
+/** Distinct (matchId, homeTeam, awayTeam) pairs that have fired at least one signal — powers the match filter. */
+export async function getSignalMatches(): Promise<{ matchId: string; homeTeam: string; awayTeam: string }[]> {
+  const res = await getSupabase().from('veille_signals').select('match_id, home_team, away_team').order('fired_at', { ascending: false })
+  if (res.error) throw new Error(res.error.message)
+  const seen = new Map<string, { matchId: string; homeTeam: string; awayTeam: string }>()
+  for (const row of res.data as { match_id: string; home_team: string; away_team: string }[]) {
+    if (!seen.has(row.match_id)) seen.set(row.match_id, { matchId: row.match_id, homeTeam: row.home_team, awayTeam: row.away_team })
+  }
+  return [...seen.values()]
+}
+
+/** Signals fired since UTC midnight — distinct from the all-time totals in getPortfolios(). */
+export async function getSignalsFiredToday(): Promise<number> {
+  const startOfDayUtc = new Date()
+  startOfDayUtc.setUTCHours(0, 0, 0, 0)
+  const res = await getSupabase()
+    .from('veille_signals')
+    .select('id', { count: 'exact', head: true })
+    .gte('fired_at', startOfDayUtc.toISOString())
+  if (res.error) throw new Error(res.error.message)
+  return res.count ?? 0
 }
 
 export async function getOnchainSignals(limit = 100): Promise<SignalFireRow[]> {
@@ -260,12 +288,13 @@ export async function getAgentStatus(): Promise<AgentStatus[]> {
   const res = await getSupabase().from('veille_agent_heartbeat').select('*')
   const rows = (res.error ? [] : res.data) as { agent: 'scout' | 'clerk'; last_seen: string }[]
   const now = Date.now()
-  // scout heartbeats every 2min, clerk every 5min — thresholds give a safety margin.
-  const thresholds: Record<'scout' | 'clerk', number> = { scout: 5 * 60_000, clerk: 11 * 60_000 }
+  // Both agents heartbeat every 60s on an independent timer (decoupled from
+  // any work cycle), so a uniform 3-minute liveness window is safe for both.
+  const ALIVE_THRESHOLD_MS = 3 * 60_000
   return (['scout', 'clerk'] as const).map((agent) => {
     const row = rows.find((r) => r.agent === agent)
     const lastSeen = row?.last_seen ?? null
-    const running = lastSeen !== null && now - new Date(lastSeen).getTime() < thresholds[agent]
+    const running = lastSeen !== null && now - new Date(lastSeen).getTime() < ALIVE_THRESHOLD_MS
     return { agent, lastSeen, running }
   })
 }

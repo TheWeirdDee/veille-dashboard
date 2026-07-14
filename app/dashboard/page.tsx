@@ -1,4 +1,4 @@
-import { getAgentStatus, getPortfolios, getSignalDefinition, getSignals } from '@/lib/dashboard-data'
+import { getAgentStatus, getPortfolios, getSignalDefinition, getSignals, getSignalsFiredToday } from '@/lib/dashboard-data'
 import { StatTile } from '../components/StatTile'
 import { OutcomeBadge } from '../components/OutcomeBadge'
 
@@ -9,11 +9,12 @@ function pct(v: number | null): string {
 }
 
 export default async function Overview() {
-  const [signal, portfolios, status, recent] = await Promise.all([
+  const [signal, portfolios, status, recent, signalsToday] = await Promise.all([
     getSignalDefinition(),
     getPortfolios(),
     getAgentStatus(),
     getSignals({ limit: 5 }),
+    getSignalsFiredToday(),
   ])
 
   return (
@@ -79,7 +80,8 @@ export default async function Overview() {
         </section>
       )}
 
-      <section className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <section className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <StatTile label="Signals today" value={String(signalsToday)} sub="since UTC midnight" />
         <StatTile label="Strategy A signals" value={String(portfolios.A.totalSignals)} sub="long the favoured team" />
         <StatTile label="Strategy A hit rate" value={pct(portfolios.A.stats.hitRate)} accent="var(--series-blue)" />
         <StatTile label="Strategy B signals" value={String(portfolios.B.totalSignals)} sub="inverse (short)" />
