@@ -259,7 +259,8 @@ export async function getAgentLog(limit = 50): Promise<AgentLogRow[]> {
 export async function getAgentStatus(): Promise<AgentStatus[]> {
   const log = await getAgentLog(200)
   const now = Date.now()
-  const thresholds: Record<'scout' | 'clerk', number> = { scout: 3 * 60_000, clerk: 11 * 60_000 }
+  // scout heartbeats every 2min, clerk polls (and heartbeats) every 5min — thresholds give a safety margin.
+  const thresholds: Record<'scout' | 'clerk', number> = { scout: 5 * 60_000, clerk: 11 * 60_000 }
   return (['scout', 'clerk'] as const).map((agent) => {
     const last = log.find((l) => l.agent === agent)
     const lastSeen = last?.loggedAt ?? null
