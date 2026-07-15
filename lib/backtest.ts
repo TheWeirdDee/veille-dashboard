@@ -10,8 +10,8 @@
  * be running for the signal's logic to be inspectable end to end.
  */
 
-import argentinaVsSwitzerland from '@/data/backtest/18222446.json'
-import norwayVsEngland from '@/data/backtest/18213979.json'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 
 export type EventType =
   | 'goal'
@@ -63,12 +63,28 @@ export interface BacktestResult {
   computedAt: string
 }
 
-export const BACKTESTS: Record<string, BacktestResult> = {
-  '18222446': argentinaVsSwitzerland as BacktestResult,
-  '18213979': norwayVsEngland as BacktestResult,
+const BACKTEST_DIR = path.join(process.cwd(), 'data', 'backtest')
+
+function loadAll(): Record<string, BacktestResult> {
+  // Numeric-string keys iterate in ascending order, and TxLINE fixture ids
+  // increase over time, so Object.values() comes out roughly chronological.
+  const out: Record<string, BacktestResult> = {}
+  for (const file of fs.readdirSync(BACKTEST_DIR)) {
+    if (!file.endsWith('.json')) continue
+    try {
+      const parsed = JSON.parse(fs.readFileSync(path.join(BACKTEST_DIR, file), 'utf8')) as BacktestResult
+      if (parsed.matchId && Array.isArray(parsed.fires)) out[parsed.matchId] = parsed
+    } catch {
+      // skip unreadable file
+    }
+  }
+  return out
 }
 
-export const DEFAULT_BACKTEST_MATCH = '18222446'
+export const BACKTESTS: Record<string, BacktestResult> = loadAll()
+
+/** Newest completed match — fixture ids increase over time. */
+export const DEFAULT_BACKTEST_MATCH = Object.keys(BACKTESTS).at(-1) ?? ''
 
 export function getBacktest(matchId?: string): BacktestResult {
   return BACKTESTS[matchId ?? ''] ?? BACKTESTS[DEFAULT_BACKTEST_MATCH]

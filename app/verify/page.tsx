@@ -34,9 +34,26 @@ Independently found 5 real goal/red-card trigger(s):
   93' goal (away)
 
 Cross-checking each independently-detected fire against the published result:
-  36' goal -> home favoured: recomputed 19.6% -> 42.0% (Δ22.7pp)  |  published 19.6% -> 42.0%  [MATCH]
+  36' goal -> home favoured: recomputed 19.6% -> 42.0% (Δ22.5pp)  |  published 19.6% -> 42.0%  [MATCH]
   47' goal -> away favoured: recomputed 25.9% -> 50.9% (Δ24.9pp)  |  published 25.9% -> 50.9%  [MATCH]
-  55' goal -> home favoured: recomputed 20.3% -> 50.4% (Δ30.3pp)  |  published 20.3% -> 50.4%  [MATCH]
+  55' goal -> home favoured: recomputed 20.3% -> 50.4% (Δ30.1pp)  |  published 20.3% -> 50.4%  [MATCH]
+
+ALL PUBLISHED FIRES INDEPENDENTLY CONFIRMED
+
+$ npx tsx scripts/independent-verify.ts 18237038
+France vs Spain
+Recomputing from raw TxLINE records only: 1025 score records, 38494 odds records.
+
+Independently found 3 real goal/red-card trigger(s):
+  22' goal (away)
+  58' goal (away)
+  61' goal (away)
+
+Cross-checking each independently-detected fire against the published result:
+  22' goal -> away favoured: recomputed 29.6% -> 58.3% (Δ28.8pp)  |  published 29.6% -> 58.3%  [MATCH]
+
+1 moment(s) where a trigger occurred but conditions were NOT met (selectivity check):
+  58' goal -> away: pre-event prob 57.7% >= 40% cap — not an underdog
 
 ALL PUBLISHED FIRES INDEPENDENTLY CONFIRMED`
 
