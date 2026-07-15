@@ -1,5 +1,6 @@
 import { getPortfolios } from '@/lib/dashboard-data'
 import type { PortfolioReport } from '@/lib/dashboard-data'
+import { BACKTESTS } from '@/lib/backtest'
 import { StatTile } from '../components/StatTile'
 import { EquityCurve } from '../components/EquityCurve'
 
@@ -72,9 +73,26 @@ export default async function PortfolioPage() {
           </div>
         </div>
         {portfolios.A.pnlSeries.length === 0 && portfolios.B.pnlSeries.length === 0 ? (
-          <div className="py-10 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-            No settled positions yet.
-          </div>
+          (() => {
+            const fires = Object.values(BACKTESTS).flatMap((b) => b.fires)
+            const aFires = fires.filter((f) => f.strategy === 'A')
+            const aHits = aFires.filter((f) => f.outcome === 'hit').length
+            return (
+              <div className="py-10 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                <p>No settled live positions yet — this curve starts at the first live fire.</p>
+                <p className="mt-2">
+                  Across the tournament backtest the same detector settled {aFires.length} Strategy A positions:{' '}
+                  <span style={{ color: 'var(--text-primary)' }}>
+                    {aHits} hits / {aFires.length - aHits} misses ({aFires.length > 0 ? Math.round((aHits / aFires.length) * 100) : 0}% hit rate)
+                  </span>
+                  .{' '}
+                  <a href="/replay" style={{ color: 'var(--series-blue)' }}>
+                    Inspect every fire →
+                  </a>
+                </p>
+              </div>
+            )
+          })()
         ) : (
           <EquityCurve a={portfolios.A.pnlSeries} b={portfolios.B.pnlSeries} />
         )}

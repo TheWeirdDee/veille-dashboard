@@ -1,6 +1,9 @@
 import { BACKTESTS, getBacktest } from '@/lib/backtest'
 import type { BacktestFire, KeyEvent } from '@/lib/backtest'
 import { OutcomeBadge } from '../components/OutcomeBadge'
+import { MatchPicker } from '../components/MatchPicker'
+import type { MatchOption } from '../components/MatchPicker'
+import { ReplayPlayer } from '../components/ReplayPlayer'
 
 function pct(v: number): string {
   return `${(v * 100).toFixed(1)}%`
@@ -42,25 +45,20 @@ export default async function ReplayPage({
         </p>
       </header>
 
-      <div className="mb-6 flex flex-wrap gap-2">
-        {Object.values(BACKTESTS).map((b) => {
-          const active = b.matchId === result.matchId
-          return (
-            <a
-              key={b.matchId}
-              href={`/replay?match=${b.matchId}`}
-              className="rounded-full px-3 py-1.5 text-sm"
-              style={{
-                background: active ? 'var(--series-blue)' : 'var(--surface-1)',
-                color: active ? '#fff' : 'var(--text-secondary)',
-                border: '1px solid var(--border)',
-              }}
-            >
-              {b.homeTeam} vs {b.awayTeam}
-            </a>
-          )
-        })}
-      </div>
+      <MatchPicker
+        currentId={result.matchId}
+        matches={Object.values(BACKTESTS).map(
+          (b): MatchOption => ({
+            matchId: b.matchId,
+            homeTeam: b.homeTeam,
+            awayTeam: b.awayTeam,
+            homeScore: b.homeScore,
+            awayScore: b.awayScore,
+            fires: b.fires.length,
+            playedAt: b.keyEvents[0]?.timestamp ?? 0,
+          })
+        )}
+      />
 
       <section
         className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg p-5"
@@ -82,6 +80,24 @@ export default async function ReplayPage({
           Historical — not a live production fire
         </span>
       </section>
+
+      {result.probSeries && result.probSeries.length > 1 && (
+        <ReplayPlayer
+          probSeries={result.probSeries}
+          keyEvents={result.keyEvents}
+          fires={result.fires.map((f) => ({
+            strategy: f.strategy,
+            triggerMinute: f.triggerMinute,
+            firedAt: f.firedAt,
+            delta: f.delta,
+            favouredTeam: f.favouredTeam,
+            position: f.position,
+            outcome: f.outcome,
+          }))}
+          homeTeam={result.homeTeam}
+          awayTeam={result.awayTeam}
+        />
+      )}
 
       {result.fires.length > 0 && (
         <section className="mb-8">

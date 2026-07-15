@@ -299,6 +299,65 @@ export async function getAgentStatus(): Promise<AgentStatus[]> {
   })
 }
 
+export interface RegistrationAnchor {
+  txSignature: string
+  signalName: string
+  anchoredAt: string
+}
+
+/** The one-time Solana memo anchoring the pre-registered signal definition. */
+export async function getRegistrationAnchor(): Promise<RegistrationAnchor | null> {
+  const res = await getSupabase()
+    .from('veille_agent_log')
+    .select('details, logged_at')
+    .eq('event_type', 'registration_anchored')
+    .order('logged_at', { ascending: true })
+    .limit(1)
+  if (res.error || !res.data || res.data.length === 0) return null
+  const row = res.data[0] as { details: { tx_signature?: string; name?: string } | null; logged_at: string }
+  if (!row.details?.tx_signature) return null
+  return {
+    txSignature: row.details.tx_signature,
+    signalName: row.details.name ?? 'POST_EVENT_PROB_SHOCK',
+    anchoredAt: row.logged_at,
+  }
+}
+
+export interface TrackedMatch {
+  matchId: string
+  homeTeam: string
+  awayTeam: string
+  phase: string
+  homeScore: number
+  awayScore: number
+  minute: number
+  lastUpdated: string
+}
+
+/**
+ * What SCOUT is (or was last) watching — from veille_match_state, which the
+ * agent upserts on every scores-stream event. Proves the feed is delivering,
+ * which a heartbeat alone cannot.
+ */
+export async function getTrackedMatches(limit = 3): Promise<TrackedMatch[]> {
+  const res = await getSupabase()
+    .from('veille_match_state')
+    .select('match_id, home_team, away_team, phase, home_score, away_score, minute, last_updated')
+    .order('last_updated', { ascending: false })
+    .limit(limit)
+  if (res.error) return []
+  return (res.data as Record<string, unknown>[]).map((r) => ({
+    matchId: r.match_id as string,
+    homeTeam: r.home_team as string,
+    awayTeam: r.away_team as string,
+    phase: r.phase as string,
+    homeScore: r.home_score as number,
+    awayScore: r.away_score as number,
+    minute: r.minute as number,
+    lastUpdated: r.last_updated as string,
+  }))
+}
+
 export interface LandingStats {
   registeredAt: string | null
   totalSignals: number

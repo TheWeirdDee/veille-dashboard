@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# demo materials — never committed
+DEMO_SCRIPT.md
+*.mp4
+*.mov
+*.webm
+*.mkv

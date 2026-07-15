@@ -50,6 +50,12 @@ export interface BacktestFire {
   firedAt: number
 }
 
+export interface ProbPoint {
+  t: number
+  h: number
+  a: number
+}
+
 export interface BacktestResult {
   matchId: string
   homeTeam: string
@@ -60,6 +66,8 @@ export interface BacktestResult {
   winner: 'home' | 'away' | 'draw'
   keyEvents: KeyEvent[]
   fires: BacktestFire[]
+  /** Downsampled full-match 1X2 probabilities — powers the animated replay. */
+  probSeries?: ProbPoint[]
   computedAt: string
 }
 

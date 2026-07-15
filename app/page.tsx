@@ -1,4 +1,5 @@
 import { getLandingStats } from '@/lib/dashboard-data'
+import { BACKTESTS } from '@/lib/backtest'
 import { SignalWaveform } from './components/SignalWaveform'
 import {
   ArrowRightIcon,
@@ -112,6 +113,34 @@ export default async function Landing() {
               pre-registered probability shock, and trades it two opposite ways at once. Every position settles
               autonomously. Every fire is written to Solana. Nothing here can be tuned after the fact.
             </p>
+            {(() => {
+              const all = Object.values(BACKTESTS)
+              const fires = all.flatMap((b) => b.fires)
+              const aFires = fires.filter((f) => f.strategy === 'A')
+              const aHits = aFires.filter((f) => f.outcome === 'hit').length
+              const hitRate = aFires.length > 0 ? Math.round((aHits / aFires.length) * 100) : 0
+              return (
+                <a
+                  href="/replay"
+                  className="mt-6 inline-flex max-w-xl flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-4 py-3 text-sm leading-relaxed"
+                  style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+                >
+                  <span className="tabular font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {fires.length} signal fires
+                  </span>
+                  across
+                  <span className="tabular font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {all.length} completed matches
+                  </span>
+                  · Strategy A hit rate
+                  <span className="tabular font-semibold" style={{ color: 'var(--series-blue)' }}>
+                    {hitRate}%
+                  </span>
+                  · every fire independently verifiable
+                  <ArrowRightIcon size={14} />
+                </a>
+              )
+            })()}
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <PrimaryButton href="/replay">Replay a real match</PrimaryButton>
               <SecondaryButton href="/dashboard">View live dashboard</SecondaryButton>

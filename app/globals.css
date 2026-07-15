@@ -24,6 +24,9 @@
   --series-blue-track: #cde2fb;
   --series-violet: #4a3aa7; /* Strategy B */
   --series-violet-track: #ded9f5;
+  /* Replay chart: home/away pair, CVD-validated on both surfaces */
+  --series-home: #2a78d6;
+  --series-away: #b45309;
   --status-good: #0ca30c;
   --status-warning: #fab219;
   --status-critical: #d03b3b;
@@ -48,6 +51,8 @@
     --series-blue-track: #184f95;
     --series-violet: #9085e9;
     --series-violet-track: #3d3470;
+    --series-home: #3987e5;
+    --series-away: #d97706;
     --status-good: #0ca30c;
     --status-warning: #fab219;
     --status-critical: #e66767;

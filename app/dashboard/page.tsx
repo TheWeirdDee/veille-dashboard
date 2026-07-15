@@ -1,4 +1,4 @@
-import { getAgentStatus, getPortfolios, getSignalDefinition, getSignals, getSignalsFiredToday } from '@/lib/dashboard-data'
+import { getAgentStatus, getPortfolios, getSignalDefinition, getSignals, getSignalsFiredToday, getTrackedMatches } from '@/lib/dashboard-data'
 import { StatTile } from '../components/StatTile'
 import { OutcomeBadge } from '../components/OutcomeBadge'
 
@@ -8,13 +8,28 @@ function pct(v: number | null): string {
   return v === null ? '—' : `${(v * 100).toFixed(1)}%`
 }
 
+const PHASE_LABEL: Record<string, string> = {
+  NS: 'not started',
+  H1: 'first half',
+  HT: 'half-time',
+  H2: 'second half',
+  F: 'full-time',
+  ET1: 'extra time',
+  ET2: 'extra time',
+  FET: 'full-time (AET)',
+  PE: 'penalties',
+  FPE: 'full-time (pens)',
+  I: 'interrupted',
+}
+
 export default async function Overview() {
-  const [signal, portfolios, status, recent, signalsToday] = await Promise.all([
+  const [signal, portfolios, status, recent, signalsToday, tracked] = await Promise.all([
     getSignalDefinition(),
     getPortfolios(),
     getAgentStatus(),
     getSignals({ limit: 5 }),
     getSignalsFiredToday(),
+    getTrackedMatches(3),
   ])
 
   return (
@@ -55,6 +70,39 @@ export default async function Overview() {
           </div>
         ))}
       </section>
+
+      {tracked.length > 0 && (
+        <section className="mb-8 rounded-lg p-4" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
+          <h2 className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Feed activity — what SCOUT is watching
+          </h2>
+          <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+            Updated on every TxLINE scores event. A green heartbeat proves the process is alive; this proves the data
+            feed is actually delivering.
+          </p>
+          <div className="mt-3 flex flex-col gap-2">
+            {tracked.map((m) => {
+              const ageMin = Math.round((Date.now() - new Date(m.lastUpdated).getTime()) / 60_000)
+              const live = !['F', 'FET', 'FPE', 'C', 'A', 'NS'].includes(m.phase) && ageMin < 10
+              return (
+                <div key={m.matchId} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <span style={{ color: 'var(--text-primary)' }}>
+                    {m.homeTeam} <span className="tabular">{m.homeScore}–{m.awayScore}</span> {m.awayTeam}
+                    <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {m.minute > 0 ? `${m.minute}′ · ` : ''}
+                      {PHASE_LABEL[m.phase] ?? m.phase}
+                    </span>
+                  </span>
+                  <span className="tabular text-xs" style={{ color: live ? 'var(--status-good)' : 'var(--text-muted)' }}>
+                    {live ? 'live — ' : ''}
+                    {ageMin < 1 ? 'updated just now' : ageMin < 60 ? `updated ${ageMin}m ago` : `updated ${new Date(m.lastUpdated).toLocaleString()}`}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {signal && (
         <section

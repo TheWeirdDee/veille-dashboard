@@ -1,13 +1,14 @@
-import { getOnchainSignals } from '@/lib/dashboard-data'
+import { getOnchainSignals, getRegistrationAnchor } from '@/lib/dashboard-data'
 import { fetchMemosLimited } from '@/lib/solana'
 import { OutcomeBadge } from '../components/OutcomeBadge'
+import { EmptyState } from '../components/EmptyState'
 
 export const dynamic = 'force-dynamic'
 
 const DECODE_LIMIT = 30
 
 export default async function OnchainPage() {
-  const signals = await getOnchainSignals(50)
+  const [signals, anchor] = await Promise.all([getOnchainSignals(50), getRegistrationAnchor()])
   const confirmed = signals.filter((s) => s.onchainStatus === 'confirmed')
 
   const toDecode = confirmed.slice(0, DECODE_LIMIT).map((s) => s.onchainTxSignature).filter((sig): sig is string => Boolean(sig))
@@ -30,13 +31,41 @@ export default async function OnchainPage() {
         </p>
       </header>
 
-      {signals.length === 0 ? (
+      {anchor && (
         <div
-          className="rounded-lg p-6 text-center text-sm"
-          style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+          className="mb-6 rounded-lg p-4"
+          style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderLeft: '3px solid var(--status-good)' }}
         >
-          No on-chain transactions yet.
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                Signal definition anchored on-chain
+              </div>
+              <div className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                {anchor.signalName} — thresholds, windows and trigger events written to Solana as an immutable memo, so
+                the parameters provably predate every fire judged against them.
+              </div>
+            </div>
+            <a
+              href={`https://explorer.solana.com/tx/${anchor.txSignature}`}
+              target="_blank"
+              rel="noreferrer"
+              className="tabular shrink-0 rounded-full px-3 py-1 text-xs font-medium"
+              style={{ background: 'var(--status-good-bg)', color: 'var(--status-good)' }}
+            >
+              {anchor.txSignature.slice(0, 8)}…{anchor.txSignature.slice(-8)} ↗
+            </a>
+          </div>
         </div>
+      )}
+
+      {signals.length === 0 ? (
+        <EmptyState
+          title="No live fires anchored on-chain yet"
+          body="Every live fire is written to Solana as a memo at fire time — that's what makes the track record tamper-proof. Fires only happen live (backtests are never anchored retroactively), so this ledger starts with the first qualifying in-play moment. The signal definition itself was pre-registered before any match it's judged on."
+          ctaHref="/verify"
+          ctaLabel="See the pre-registered definition"
+        />
       ) : (
         <div className="flex flex-col gap-3">
           {signals.map((s) => {

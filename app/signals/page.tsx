@@ -1,5 +1,7 @@
 import { getSignalMatches, getSignals } from '@/lib/dashboard-data'
+import { BACKTESTS } from '@/lib/backtest'
 import { OutcomeBadge } from '../components/OutcomeBadge'
+import { EmptyState } from '../components/EmptyState'
 
 export const dynamic = 'force-dynamic'
 
@@ -117,12 +119,12 @@ export default async function SignalsPage({
       </div>
 
       {signals.length === 0 ? (
-        <div
-          className="rounded-lg p-6 text-center text-sm"
-          style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-        >
-          No signals yet for this filter.
-        </div>
+        <EmptyState
+          title="No live fires yet for this filter"
+          body={`POST_EVENT_PROB_SHOCK is selective by design: it needs an underdog (<40% implied) to score or draw a red card AND the market to reprice ≥12 points within 120 seconds. The identical detector produced ${Object.values(BACKTESTS).reduce((n, b) => n + b.fires.length, 0)} fires across ${Object.keys(BACKTESTS).length} completed tournament matches — inspect every one, tick by tick, in the historical replay.`}
+          ctaHref="/replay"
+          ctaLabel="View backtested fires"
+        />
       ) : (
         <div className="overflow-x-auto rounded-lg" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
           <table className="w-full min-w-[900px] text-left text-sm">

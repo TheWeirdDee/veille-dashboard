@@ -1,4 +1,5 @@
 import { getSubscribers } from '@/lib/dashboard-data'
+import { EmptyState } from '../components/EmptyState'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,12 +21,10 @@ export default async function SubscribersPage() {
       </header>
 
       {subscribers.length === 0 ? (
-        <div
-          className="rounded-lg p-6 text-center text-sm"
-          style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-        >
-          No subscribers registered yet.
-        </div>
+        <EmptyState
+          title="No webhook subscribers registered yet"
+          body="Any service can register an HTTPS endpoint and receive every fire the moment it happens, HMAC-signed so the payload is verifiable. Deliveries, failures, and per-subscriber stats appear here once the first endpoint is registered."
+        />
       ) : (
         <div className="overflow-x-auto rounded-lg" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
           <table className="w-full min-w-[760px] text-left text-sm">
