@@ -479,7 +479,7 @@ export default async function Landing() {
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <PrimaryButton href="/replay">Replay a real match</PrimaryButton>
             <SecondaryButton href="/dashboard">Live dashboard</SecondaryButton>
-            <SecondaryButton href="https://github.com/TheWeirdDee/veille">
+            <SecondaryButton href="https://github.com/TheWeirdDee/Vielle">
               <GithubIcon size={16} />
               Source
             </SecondaryButton>
@@ -551,7 +551,7 @@ export default async function Landing() {
               </div>
               <ul className="mt-3 flex flex-col gap-2 text-sm">
                 <li>
-                  <a href="https://github.com/TheWeirdDee/veille" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)' }}>
+                  <a href="https://github.com/TheWeirdDee/Vielle" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)' }}>
                     GitHub — agents
                   </a>
                 </li>

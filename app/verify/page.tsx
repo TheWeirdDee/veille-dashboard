@@ -156,8 +156,8 @@ export default async function VerifyPage() {
       <section className="rounded-lg p-4 text-sm" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
         <strong style={{ color: 'var(--text-primary)' }}>Run it yourself, offline, trusting nothing here:</strong>{' '}
         clone{' '}
-        <a href="https://github.com/TheWeirdDee/veille" target="_blank" rel="noopener noreferrer" className="underline">
-          github.com/TheWeirdDee/veille
+        <a href="https://github.com/TheWeirdDee/Vielle" target="_blank" rel="noopener noreferrer" className="underline">
+          github.com/TheWeirdDee/Vielle
         </a>
         , then <code className="tabular">npx tsx scripts/independent-verify.ts 18222446</code> against the raw data
         already committed in <code className="tabular">data/replay-cache/</code>.

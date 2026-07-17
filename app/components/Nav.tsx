@@ -11,6 +11,7 @@ const LINKS = [
   { label: 'On-chain', href: '/onchain' },
   { label: 'Subscribers', href: '/subscribers' },
   { label: 'Agent log', href: '/agent-log' },
+  { label: 'Docs', href: '/docs' },
 ]
 
 export function Nav() {
