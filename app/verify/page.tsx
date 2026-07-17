@@ -20,7 +20,7 @@ Cross-checking each independently-detected fire against the published result:
 1 moment(s) where a trigger occurred but conditions were NOT met (selectivity check):
   10' goal -> home: pre-event prob 52.5% >= 40% cap — not an underdog
 
-ALL PUBLISHED FIRES INDEPENDENTLY CONFIRMED
+PUBLISHED AND INDEPENDENT FIRE SETS MATCH
 
 $ npx tsx scripts/independent-verify.ts 18213979
 Norway vs England
@@ -38,7 +38,7 @@ Cross-checking each independently-detected fire against the published result:
   47' goal -> away favoured: recomputed 25.9% -> 50.9% (Δ24.9pp)  |  published 25.9% -> 50.9%  [MATCH]
   55' goal -> home favoured: recomputed 20.3% -> 50.4% (Δ30.1pp)  |  published 20.3% -> 50.4%  [MATCH]
 
-ALL PUBLISHED FIRES INDEPENDENTLY CONFIRMED
+PUBLISHED AND INDEPENDENT FIRE SETS MATCH
 
 $ npx tsx scripts/independent-verify.ts 18237038
 France vs Spain
@@ -55,7 +55,7 @@ Cross-checking each independently-detected fire against the published result:
 1 moment(s) where a trigger occurred but conditions were NOT met (selectivity check):
   58' goal -> away: pre-event prob 57.7% >= 40% cap — not an underdog
 
-ALL PUBLISHED FIRES INDEPENDENTLY CONFIRMED`
+PUBLISHED AND INDEPENDENT FIRE SETS MATCH`
 
 export default async function VerifyPage() {
   const [signal, example] = await Promise.all([getSignalDefinition(), Promise.resolve(getBacktest('18222446'))])
@@ -143,7 +143,7 @@ export default async function VerifyPage() {
           <code className="tabular">scripts/independent-verify.ts</code> in the agent repo imports nothing from
           VEILLE&apos;s production detector. It re-derives trigger events and odds probabilities from the raw TxLINE
           records and independently checks the same three conditions. This is the real terminal output from running
-          it against both replayable matches:
+          it against three replayable matches:
         </p>
         <pre
           className="tabular overflow-x-auto whitespace-pre rounded-md p-3 text-xs leading-relaxed"

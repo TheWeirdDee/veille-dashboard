@@ -23,9 +23,9 @@ function StrategyColumn({ p, color, label }: { p: PortfolioReport; color: string
         </span>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <StatTile label="P&L (units)" value={p.pnlUnits > 0 ? `+${p.pnlUnits}` : String(p.pnlUnits)} accent={color} />
+        <StatTile label="Outcome score" value={p.pnlUnits > 0 ? `+${p.pnlUnits}` : String(p.pnlUnits)} accent={color} />
         <StatTile label="Win rate" value={pct(p.stats.hitRate)} />
-        <StatTile label="Sharpe ratio" value={p.sharpeRatio.toFixed(3)} />
+        <StatTile label="Hit-score ratio" value={p.sharpeRatio.toFixed(3)} />
         <StatTile label="Max drawdown" value={String(p.maxDrawdown)} />
       </div>
       <div className="mt-3 text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -46,8 +46,8 @@ export default async function PortfolioPage() {
           Portfolio — Strategy A vs B
         </h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-          Same signal, opposite positions. Fixed-fractional sizing — 1 unit of notional capital per fire. The
-          on-chain ledger settles which approach actually performs better across the tournament.
+          Same signal, opposite outcome hypotheses. Each hit scores +1 and each miss -1. These are classification
+          results, not executable prices, fees, slippage, or trading returns.
         </p>
       </header>
 
@@ -59,7 +59,7 @@ export default async function PortfolioPage() {
       <section className="rounded-lg p-4" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-            Cumulative P&L
+            Cumulative outcome score
           </h2>
           <div className="flex gap-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
             <span className="flex items-center gap-1.5">

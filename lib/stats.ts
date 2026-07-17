@@ -76,7 +76,7 @@ export function calculateSharpe(returns: number[]): number {
 
 /** Largest peak-to-trough drop in a cumulative P&L series. */
 export function calculateMaxDrawdown(pnlSeries: number[]): number {
-  let peak = pnlSeries[0] || 0
+  let peak = 0
   let maxDD = 0
   for (const pnl of pnlSeries) {
     if (pnl > peak) peak = pnl

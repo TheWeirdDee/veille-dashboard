@@ -13,7 +13,7 @@ export default async function SubscribersPage() {
           Subscribers
         </h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-          B2B webhook subscribers. Every fire and settlement is delivered as an HMAC-SHA256-signed POST within the
+          B2B webhook subscribers. Every fire and settlement is queued as an exact-body HMAC-SHA256-signed v2 POST within the
           retry window. Registration happens via <code className="tabular">veille_subscribers</code> directly —
           this is a monitoring view, not a public sign-up form, since accepting webhook URLs from an unauthenticated
           form would let anyone register an endpoint.
@@ -44,7 +44,7 @@ export default async function SubscribersPage() {
                     {s.name}
                   </td>
                   <td className="tabular px-4 py-2.5" style={{ color: 'var(--text-secondary)' }}>
-                    {s.webhookUrl}
+                    {s.webhookHost}
                   </td>
                   <td className="px-4 py-2.5" style={{ color: 'var(--text-secondary)' }}>
                     {s.strategies.join(', ')}

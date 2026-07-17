@@ -36,7 +36,7 @@ export interface PortfolioReport {
   peakPnl: number
   lastUpdated: string | null
   stats: HitRateStats
-  /** Cumulative P&L after each settled position, oldest first — for the equity curve. */
+  /** Cumulative +1/-1 outcome score, oldest first. Not execution P&L. */
   pnlSeries: number[]
 }
 
@@ -59,6 +59,8 @@ export interface SignalFireRow {
   actualWinner: string | null
   onchainStatus: string
   onchainTxSignature: string | null
+  settlementOnchainStatus: string
+  settlementOnchainTxSignature: string | null
   recoveredFromSnapshot: boolean
   subscribersNotified: number
   subscribersFailed: number
@@ -78,7 +80,7 @@ export interface AgentLogRow {
 export interface SubscriberRow {
   id: string
   name: string
-  webhookUrl: string
+  webhookHost: string
   active: boolean
   strategies: string[]
   createdAt: string
@@ -101,7 +103,8 @@ export async function getSignalDefinition(): Promise<SignalReport | null> {
     .select('*')
     .eq('name', 'POST_EVENT_PROB_SHOCK')
     .maybeSingle()
-  if (res.error || !res.data) return null
+  if (res.error) throw new Error(res.error.message)
+  if (!res.data) return null
   const r = res.data as Record<string, unknown>
   return {
     id: r.id as string,
@@ -121,15 +124,15 @@ export async function getPortfolios(): Promise<Record<Strategy, PortfolioReport>
   const db = getSupabase()
   const [portfolioRes, signalsRes] = await Promise.all([
     db.from('veille_portfolio').select('*'),
-    db.from('veille_signals').select('strategy, outcome, fired_at').not('outcome', 'is', null).order('fired_at', { ascending: true }),
+    db.from('veille_signals').select('strategy, outcome, resolved_at, fired_at').not('outcome', 'is', null)
+      .order('resolved_at', { ascending: true, nullsFirst: false }).order('fired_at', { ascending: true }),
   ])
   if (portfolioRes.error) throw new Error(portfolioRes.error.message)
+  if (signalsRes.error) throw new Error(signalsRes.error.message)
   const rows = portfolioRes.data as Record<string, unknown>[]
   const settledByStrategy: Record<Strategy, string[]> = { A: [], B: [] }
-  if (!signalsRes.error) {
-    for (const s of signalsRes.data as { strategy: Strategy; outcome: string }[]) {
-      if (s.outcome !== 'void') settledByStrategy[s.strategy].push(s.outcome)
-    }
+  for (const s of signalsRes.data as { strategy: Strategy; outcome: string }[]) {
+    if (s.outcome !== 'void') settledByStrategy[s.strategy].push(s.outcome)
   }
 
   const result = {} as Record<Strategy, PortfolioReport>
@@ -185,6 +188,8 @@ interface SignalFireDbRow {
   actual_winner: string | null
   onchain_status: string
   onchain_tx_signature: string | null
+  settlement_onchain_status: string | null
+  settlement_onchain_tx_signature: string | null
   recovered_from_snapshot: boolean
   subscribers_notified: number
   subscribers_failed: number
@@ -212,6 +217,8 @@ function mapFire(r: SignalFireDbRow): SignalFireRow {
     actualWinner: r.actual_winner,
     onchainStatus: r.onchain_status,
     onchainTxSignature: r.onchain_tx_signature,
+    settlementOnchainStatus: r.settlement_onchain_status ?? 'pending',
+    settlementOnchainTxSignature: r.settlement_onchain_tx_signature,
     recoveredFromSnapshot: r.recovered_from_snapshot,
     subscribersNotified: r.subscribers_notified,
     subscribersFailed: r.subscribers_failed,
@@ -264,7 +271,7 @@ export async function getOnchainSignals(limit = 100): Promise<SignalFireRow[]> {
   const res = await getSupabase()
     .from('veille_signals')
     .select('*')
-    .not('onchain_tx_signature', 'is', null)
+    .or('onchain_tx_signature.not.is.null,settlement_onchain_tx_signature.not.is.null')
     .order('fired_at', { ascending: false })
     .limit(limit)
   if (res.error) throw new Error(res.error.message)
@@ -286,7 +293,8 @@ export async function getAgentLog(limit = 50): Promise<AgentLogRow[]> {
 
 export async function getAgentStatus(): Promise<AgentStatus[]> {
   const res = await getSupabase().from('veille_agent_heartbeat').select('*')
-  const rows = (res.error ? [] : res.data) as { agent: 'scout' | 'clerk'; last_seen: string }[]
+  if (res.error) throw new Error(res.error.message)
+  const rows = res.data as { agent: 'scout' | 'clerk'; last_seen: string }[]
   const now = Date.now()
   // Both agents heartbeat every 60s on an independent timer (decoupled from
   // any work cycle), so a uniform 3-minute liveness window is safe for both.
@@ -313,7 +321,8 @@ export async function getRegistrationAnchor(): Promise<RegistrationAnchor | null
     .eq('event_type', 'registration_anchored')
     .order('logged_at', { ascending: true })
     .limit(1)
-  if (res.error || !res.data || res.data.length === 0) return null
+  if (res.error) throw new Error(res.error.message)
+  if (!res.data || res.data.length === 0) return null
   const row = res.data[0] as { details: { tx_signature?: string; name?: string } | null; logged_at: string }
   if (!row.details?.tx_signature) return null
   return {
@@ -345,7 +354,7 @@ export async function getTrackedMatches(limit = 3): Promise<TrackedMatch[]> {
     .select('match_id, home_team, away_team, phase, home_score, away_score, minute, last_updated')
     .order('last_updated', { ascending: false })
     .limit(limit)
-  if (res.error) return []
+  if (res.error) throw new Error(res.error.message)
   return (res.data as Record<string, unknown>[]).map((r) => ({
     matchId: r.match_id as string,
     homeTeam: r.home_team as string,
@@ -375,6 +384,7 @@ export async function getLandingStats(): Promise<LandingStats> {
     getAgentStatus(),
     db.from('veille_signals').select('id', { count: 'exact', head: true }).eq('onchain_status', 'confirmed'),
   ])
+  if (onchain.error) throw new Error(onchain.error.message)
   return {
     registeredAt: signal?.registeredAt ?? null,
     totalSignals: portfolios.A.totalSignals + portfolios.B.totalSignals,
@@ -390,15 +400,23 @@ export async function getSubscribers(): Promise<SubscriberRow[]> {
     .select('id, name, webhook_url, active, strategies, created_at, last_delivery_at, total_deliveries, failed_deliveries')
     .order('created_at', { ascending: false })
   if (res.error) throw new Error(res.error.message)
-  return (res.data as Record<string, unknown>[]).map((r) => ({
-    id: r.id as string,
-    name: r.name as string,
-    webhookUrl: r.webhook_url as string,
-    active: r.active as boolean,
-    strategies: r.strategies as string[],
-    createdAt: r.created_at as string,
-    lastDeliveryAt: (r.last_delivery_at as string) ?? null,
-    totalDeliveries: r.total_deliveries as number,
-    failedDeliveries: r.failed_deliveries as number,
-  }))
+  return (res.data as Record<string, unknown>[]).map((r) => {
+    let webhookHost = 'private endpoint'
+    try {
+      webhookHost = new URL(r.webhook_url as string).host
+    } catch {
+      /* Do not expose malformed/private endpoint details in public output. */
+    }
+    return {
+      id: r.id as string,
+      name: r.name as string,
+      webhookHost,
+      active: r.active as boolean,
+      strategies: r.strategies as string[],
+      createdAt: r.created_at as string,
+      lastDeliveryAt: (r.last_delivery_at as string) ?? null,
+      totalDeliveries: r.total_deliveries as number,
+      failedDeliveries: r.failed_deliveries as number,
+    }
+  })
 }

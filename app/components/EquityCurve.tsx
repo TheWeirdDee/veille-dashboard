@@ -1,4 +1,4 @@
-/** Minimal two-series line chart for cumulative P&L. Static SVG — exact values live in the stat tiles beside it. */
+/** Minimal two-series line chart for cumulative +1/-1 outcome score. */
 export function EquityCurve({ a, b }: { a: number[]; b: number[] }) {
   const width = 640
   const height = 160
@@ -19,7 +19,7 @@ export function EquityCurve({ a, b }: { a: number[]; b: number[] }) {
   const zeroY = y(0)
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label="Cumulative P&L, Strategy A vs B">
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label="Cumulative outcome score, Strategy A vs B">
       <line x1={pad} y1={zeroY} x2={width - pad} y2={zeroY} stroke="var(--gridline)" strokeWidth={1} />
       {a.length > 0 && <path d={path(a)} fill="none" stroke="var(--series-blue)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />}
       {b.length > 0 && <path d={path(b)} fill="none" stroke="var(--series-violet)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />}

@@ -111,7 +111,8 @@ export default async function Landing() {
             <p className="mt-5 max-w-xl text-base leading-relaxed sm:text-lg" style={{ color: 'var(--text-secondary)' }}>
               VEILLE watches every live World Cup match on TxLINE&apos;s odds and scores feeds, detects one
               pre-registered probability shock, and trades it two opposite ways at once. Every position settles
-              autonomously. Every fire is written to Solana. Nothing here can be tuned after the fact.
+              autonomously. Every fire is persisted first, then queued for Solana and subscriber delivery. Nothing
+              here can be tuned after the fact.
             </p>
             {(() => {
               const all = Object.values(BACKTESTS)
@@ -136,7 +137,7 @@ export default async function Landing() {
                   <span className="tabular font-semibold" style={{ color: 'var(--series-blue)' }}>
                     {hitRate}%
                   </span>
-                  · every fire independently verifiable
+                  · every published fire independently recomputed
                   <ArrowRightIcon size={14} />
                 </a>
               )
@@ -315,7 +316,7 @@ export default async function Landing() {
           </div>
 
           <p className="mx-auto mt-6 max-w-2xl text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-            Fixed-fractional sizing — one unit of notional capital per fire, no confidence weighting, no discretion.
+            Performance uses a transparent +1 hit / -1 miss outcome score; it is not execution profit or loss.
             A five-minute cooldown per match (reset at half-time and full-time) stops a goal immediately followed by
             a card from producing signal clusters.
           </p>
@@ -342,12 +343,12 @@ export default async function Landing() {
               {
                 icon: <LayersIcon size={22} />,
                 title: 'Portfolio management',
-                body: 'CLERK settles every position against the actual outcome and recomputes win rate, Sharpe ratio, and maximum drawdown — the numbers a trading desk actually looks at, not just a hit-rate headline.',
+                body: 'CLERK settles every position against the actual outcome and recomputes hit rate, confidence intervals, outcome-score ratio, and drawdown. No execution-return claim is made without prices, fees, and slippage.',
               },
               {
                 icon: <ChainIcon size={22} />,
                 title: 'On-chain ledger',
-                body: 'Every fire and every settlement is written to Solana via the Memo program, referencing TxLINE’s cryptographic proof for that exact match moment. No custom contract — nothing to trust but arithmetic.',
+                body: 'Every fire and settlement is queued for the Solana Memo program. The dashboard verifies the configured wallet signer and memo fields; native TxLINE proof references are explicitly marked unavailable.',
               },
               {
                 icon: <SendIcon size={22} />,
@@ -432,9 +433,8 @@ export default async function Landing() {
               </h2>
               <p className="mt-3 text-base leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                 A trading desk doesn&apos;t need to trust this dashboard&apos;s numbers &mdash; every signal and
-                settlement is independently checkable on Solana Explorer, referenced against TxLINE&apos;s own
-                cryptographic proof. Subscribe an execution system to the webhook feed and act on signals without a
-                human anywhere in the loop.
+                settlement memo is independently checkable on Solana Explorer and compared with its database record.
+                Native TxLINE proof validation is not claimed. Subscriber delivery is HMAC-authenticated and replay-protected.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <SecondaryButton href="/onchain">View on-chain ledger</SecondaryButton>
@@ -443,8 +443,11 @@ export default async function Landing() {
             </div>
 
             <div className="rounded-lg p-5 font-mono text-xs leading-relaxed" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
-              <div style={{ color: 'var(--text-muted)' }}>{'// webhook payload — HMAC-SHA256 signed'}</div>
+              <div style={{ color: 'var(--text-muted)' }}>{'// exact body signed in X-VEILLE-Signature'}</div>
               <pre className="mt-2 whitespace-pre-wrap break-words">{`{
+  "veille_version": 2,
+  "delivery_id": "signal:event:subscriber",
+  "sent_at": 1784000000000,
   "event": "signal_fired",
   "strategy": "A",
   "match_id": "18222446",
@@ -454,8 +457,7 @@ export default async function Landing() {
   "pre_event_prob": 0.321,
   "post_signal_prob": 0.461,
   "delta": 0.140,
-  "onchain_tx": "5TCB2qpL...",
-  "hmac_signature": "79afc681..."
+  "onchain_tx": "5TCB2qpL..."
 }`}</pre>
             </div>
           </div>
