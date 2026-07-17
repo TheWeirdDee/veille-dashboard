@@ -1,23 +1,7 @@
 import { BACKTESTS, getBacktest } from '@/lib/backtest'
-import type { BacktestFire, KeyEvent } from '@/lib/backtest'
-import { OutcomeBadge } from '../components/OutcomeBadge'
 import { MatchPicker } from '../components/MatchPicker'
 import type { MatchOption } from '../components/MatchPicker'
 import { ReplayPlayer } from '../components/ReplayPlayer'
-
-function pct(v: number): string {
-  return `${(v * 100).toFixed(1)}%`
-}
-
-function minuteLabel(minute: number): string {
-  return minute > 90 ? `${minute}' (ET)` : `${minute}'`
-}
-
-function eventLabel(type: string): string {
-  return type.replace(/_/g, ' ')
-}
-
-type TimelineItem = { kind: 'event'; timestamp: number; event: KeyEvent } | { kind: 'fire'; timestamp: number; fire: BacktestFire }
 
 export default async function ReplayPage({
   searchParams,
@@ -26,11 +10,6 @@ export default async function ReplayPage({
 }) {
   const { match } = await searchParams
   const result = getBacktest(match)
-
-  const timeline: TimelineItem[] = [
-    ...result.keyEvents.map((event): TimelineItem => ({ kind: 'event', timestamp: event.timestamp, event })),
-    ...result.fires.map((fire): TimelineItem => ({ kind: 'fire', timestamp: fire.firedAt, fire })),
-  ].sort((a, b) => a.timestamp - b.timestamp)
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
@@ -81,99 +60,25 @@ export default async function ReplayPage({
         </span>
       </section>
 
-      {result.probSeries && result.probSeries.length > 1 && (
-        <ReplayPlayer
-          probSeries={result.probSeries}
-          keyEvents={result.keyEvents}
-          fires={result.fires.map((f) => ({
-            strategy: f.strategy,
-            triggerMinute: f.triggerMinute,
-            firedAt: f.firedAt,
-            delta: f.delta,
-            favouredTeam: f.favouredTeam,
-            position: f.position,
-            outcome: f.outcome,
-          }))}
-          homeTeam={result.homeTeam}
-          awayTeam={result.awayTeam}
-        />
-      )}
-
-      {result.fires.length > 0 && (
-        <section className="mb-8">
-          <h2 className="mb-3 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-            Signal fires
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {result.fires.map((fire, i) => {
-              const preFav = fire.favouredTeam === 'home' ? fire.preEventHomeProb : fire.preEventAwayProb
-              const postFav = fire.favouredTeam === 'home' ? fire.postSignalHomeProb : fire.postSignalAwayProb
-              return (
-                <div
-                  key={i}
-                  className="rounded-lg p-4"
-                  style={{
-                    background: 'var(--surface-1)',
-                    border: '1px solid var(--border)',
-                    borderTop: `3px solid ${fire.strategy === 'A' ? 'var(--series-blue)' : 'var(--series-violet)'}`,
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <span
-                      className="text-xs font-semibold uppercase tracking-wide"
-                      style={{ color: fire.strategy === 'A' ? 'var(--series-blue)' : 'var(--series-violet)' }}
-                    >
-                      Strategy {fire.strategy}
-                    </span>
-                    <OutcomeBadge value={fire.outcome} />
-                  </div>
-                  <div className="mt-2 text-sm" style={{ color: 'var(--text-primary)' }}>
-                    {eventLabel(fire.triggerEvent)} at {minuteLabel(fire.triggerMinute)} → {fire.position.replace('_', ' ')}
-                  </div>
-                  <div className="tabular mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {pct(preFav)} → {pct(postFav)} in {fire.windowSeconds.toFixed(0)}s (+{pct(fire.delta)})
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      <section>
-        <h2 className="mb-3 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-          Match timeline
-        </h2>
-        <div className="overflow-hidden rounded-lg" style={{ background: 'var(--surface-1)', border: '1px solid var(--border)' }}>
-          {timeline.map((item, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-4 px-4 py-2.5 text-sm"
-              style={i < timeline.length - 1 ? { borderBottom: '1px solid var(--gridline)' } : undefined}
-            >
-              <span className="tabular w-14 shrink-0" style={{ color: 'var(--text-muted)' }}>
-                {item.kind === 'event' ? minuteLabel(item.event.minute) : minuteLabel(item.fire.triggerMinute)}
-              </span>
-              {item.kind === 'event' ? (
-                <span style={{ color: 'var(--text-secondary)' }}>
-                  {eventLabel(item.event.type)}
-                  {item.event.team && <span className="capitalize"> · {item.event.team}</span>}
-                </span>
-              ) : (
-                <span
-                  className="font-medium"
-                  style={{ color: item.fire.strategy === 'A' ? 'var(--series-blue)' : 'var(--series-violet)' }}
-                >
-                  Signal fired — Strategy {item.fire.strategy} → {item.fire.position.replace('_', ' ')}
-                  <span className="ml-2 font-normal" style={{ color: 'var(--text-muted)' }}>
-                    ({item.fire.outcome})
-                  </span>
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
+      <ReplayPlayer
+        probSeries={result.probSeries ?? []}
+        keyEvents={result.keyEvents}
+        fires={result.fires.map((f) => ({
+          strategy: f.strategy,
+          triggerEvent: f.triggerEvent,
+          triggerMinute: f.triggerMinute,
+          firedAt: f.firedAt,
+          delta: f.delta,
+          favouredTeam: f.favouredTeam,
+          position: f.position,
+          outcome: f.outcome,
+          preFavProb: f.favouredTeam === 'home' ? f.preEventHomeProb : f.preEventAwayProb,
+          postFavProb: f.favouredTeam === 'home' ? f.postSignalHomeProb : f.postSignalAwayProb,
+          windowSeconds: f.windowSeconds,
+        }))}
+        homeTeam={result.homeTeam}
+        awayTeam={result.awayTeam}
+      />
     </div>
   )
 }

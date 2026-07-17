@@ -3,6 +3,7 @@ const CONFIG: Record<string, { label: string; dot: string; bg: string; fg: strin
   miss: { label: 'Miss', dot: 'var(--status-critical)', bg: 'var(--status-critical-bg)', fg: 'var(--status-critical)' },
   void: { label: 'Void', dot: 'var(--text-muted)', bg: 'var(--status-muted-bg)', fg: 'var(--text-secondary)' },
   pending: { label: 'Pending', dot: 'var(--text-muted)', bg: 'var(--status-muted-bg)', fg: 'var(--text-secondary)' },
+  open: { label: 'Open', dot: 'var(--series-blue)', bg: 'var(--status-muted-bg)', fg: 'var(--text-secondary)' },
   confirmed: { label: 'Confirmed', dot: 'var(--status-good)', bg: 'var(--status-good-bg)', fg: 'var(--status-good)' },
   failed: { label: 'Failed', dot: 'var(--status-critical)', bg: 'var(--status-critical-bg)', fg: 'var(--status-critical)' },
 }
