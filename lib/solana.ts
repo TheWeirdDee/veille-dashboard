@@ -82,8 +82,11 @@ function verifyMemo(
     if (JSON.stringify(memo[key]) !== JSON.stringify(value)) errors.push(`${key} does not match database record`)
   }
   if (expected.delta !== undefined) {
+    // veille_signals.delta is DECIMAL(5,4) so the database rounds to 4 dp,
+    // while the memo carries the agent's full-precision float — tolerate
+    // exactly that rounding (±5e-5) and nothing more.
     const actual = Number(memo.delta)
-    if (!Number.isFinite(actual) || Math.abs(actual - expected.delta) > 0.000001) {
+    if (!Number.isFinite(actual) || Math.abs(actual - expected.delta) > 0.0000501) {
       errors.push('delta does not match database record')
     }
   }
