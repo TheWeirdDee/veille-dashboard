@@ -159,7 +159,7 @@ export default async function Landing() {
               </div>
               <div>
                 <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  Signals fired
+                  Live signals fired
                 </dt>
                 <dd className="tabular mt-0.5 text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
                   {stats.totalSignals}
@@ -167,7 +167,7 @@ export default async function Landing() {
               </div>
               <div>
                 <dt className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  On-chain confirmations
+                  Live on-chain confirmations
                 </dt>
                 <dd className="tabular mt-0.5 text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
                   {stats.totalOnchainConfirmed}

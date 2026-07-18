@@ -96,6 +96,16 @@ export default async function OnchainPage() {
               {anchor.txSignature.slice(0, 8)}…{anchor.txSignature.slice(-8)} ↗
             </a>
           </div>
+          {anchorDecoded?.memo && (
+            <div className="mt-3 rounded-md p-3 font-mono text-xs" style={{ background: 'var(--surface-page)', border: '1px solid var(--gridline)', color: 'var(--text-secondary)' }}>
+              <div className="mb-1" style={{ color: 'var(--text-muted)' }}>
+                {'// decoded from Solana and compared field-by-field with veille_signal_registry'}
+                {anchorDecoded.slot !== null && ` · slot ${anchorDecoded.slot}`}
+                {anchorDecoded.signer && ` · signer ${anchorDecoded.signer.slice(0, 6)}…${anchorDecoded.signer.slice(-6)}`}
+              </div>
+              <pre className="whitespace-pre-wrap break-words">{JSON.stringify(anchorDecoded.memo, null, 2)}</pre>
+            </div>
+          )}
         </section>
       )}
 
