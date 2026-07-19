@@ -130,9 +130,9 @@ export default async function Overview() {
 
       <section className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
         <StatTile label="Signals today" value={String(signalsToday)} sub="since UTC midnight" />
-        <StatTile label="Strategy A signals" value={String(portfolios.A.totalSignals)} sub="long the favoured team" />
+        <StatTile label="Strategy A settled" value={String(portfolios.A.totalSignals)} sub="long the favoured team" />
         <StatTile label="Strategy A hit rate" value={pct(portfolios.A.stats.hitRate)} accent="var(--series-blue)" />
-        <StatTile label="Strategy B signals" value={String(portfolios.B.totalSignals)} sub="inverse (short)" />
+        <StatTile label="Strategy B settled" value={String(portfolios.B.totalSignals)} sub="inverse (short)" />
         <StatTile label="Strategy B hit rate" value={pct(portfolios.B.stats.hitRate)} accent="var(--series-violet)" />
       </section>
 
