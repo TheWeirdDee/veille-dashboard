@@ -18,7 +18,7 @@ export function Nav() {
   const pathname = usePathname()
 
   return (
-    <nav style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface-1)' }}>
+    <nav className="sticky top-0 z-50" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface-1)' }}>
       <div className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-6 text-sm whitespace-nowrap">
         <a
           href="/"
